@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Budget tracker</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header>
@@ -15,33 +15,50 @@
         </nav>
     </header>
     <main>
+        
         <section>
             <h2>Добавить запись</h2>
             <form id="budget-form">
-                <label for="description">Описание:</label>
-                <input type="text" id="description" required>
+
+                <label for="category">Категория:</label>
+                <select id="category" required>
+                    <!-- Опции будут добавляться динамически -->
+                </select>
 
                 <label for="amount">Сумма:</label>
                 <input type="number" id="amount" required>
 
+                <label for="description">Описание:</label>
+                <input type="text" id="description">
+
+
                 <label for="type">Тип:</label>
                 <select id="type">
-                    <option value="income">Доход</option>
-                    <option value="expense">Расход</option>
+                    <option value="Расход">Расход</option>
+                    <option value="Доход">Доход</option>
                 </select>
+
+                <label for="date">Дата:</label>
+                <input type="date" id="date">
 
                 <button type="submit">Добавить</button>
             </form>
         </section>
+
+        <section>
+            <h2>Состояние счёта</h2>
+            <p id="current-balance">Баланс: 0</p>
+        </section>
+        
         <section>
             <h2>Записи бюджета</h2>
             <table>
                 <thead>
                     <tr>
+                        <th>Тип</th>
                         <th>Описание</th>
                         <th>Сумма</th>
-                        <th>Тип</th>
-                        <th>Действия</th>
+                        <th>Дата</th>
                     </tr>
                 </thead>
                 <tbody id="budget-table">

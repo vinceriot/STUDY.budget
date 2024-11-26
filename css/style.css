@@ -1,0 +1,11 @@
+/* Стили для строк с доходами */
+.income .amount-cell {
+    
+    color: #525acb; 
+}
+
+/* Стили для строк с расходами */
+.expense .amount-cell {
+    color: #b22222; 
+}
+
