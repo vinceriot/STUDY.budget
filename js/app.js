@@ -1,29 +1,41 @@
 'use strict'
 
 window.addEventListener("DOMContentLoaded", function() {
+
+const budgetData = JSON.parse(localStorage.getItem('budgetData')) || [];
+
+// === DOM элементы
 const budgetForm = document.getElementById('budget-form'); //форма
 const budgetTable = document.getElementById('budget-table'); //таблица с записями
 const typeSelect = document.getElementById('type'); //выбранный тип записи (Доход, Расход)
 const submitButton = budgetForm.querySelector('button[type="submit"]'); //кнопка добавления записи
 const categorySelect = document.getElementById('category'); //Элемент с категориями
+const formSection = document.getElementById('edit-section');
+const formTitle = document.getElementById('title-added-form');
 
+// === DOM элементы фильтра 
 const filterCategorySelect = document.getElementById('filter-category'); //Фильтр по категориям
 const filterTypeSelect = document.getElementById('filter-type');
 const filterStartDate = document.getElementById('filter-start-date');
 const filterEndDate = document.getElementById('filter-end-date');
+const toggleFilterBtn = document.getElementById("toggle-filter-btn");
+const filterSection = document.getElementById("filter-section");
 
-let incomeCategories = ["Зарплата", "Подарки", "Инвестиции"];
-let expenseCategories = ["Транспорт", "Еда", "Одежда", "Медицина", "Подарки"];
+// === Начальные данные
+let incomeCategories = ["Зарплата", "Подарки", "Инвестиции"]; //категории доходов
+let expenseCategories = ["Транспорт", "Еда", "Одежда", "Медицина", "Подарки"]; //категории расходов
+let editIndex = null; //сохранение индекса редактируемой записи 
 
-let budgetData = JSON.parse(localStorage.getItem('budgetData')) || [];
-let editIndex = null; //Сохраняет индекс редактируемой записи
 
-function saveData() { //сохранение запиcей в localstorage
+// === Основные функции
+
+// Cохранение записей в localStorage 
+function saveData() {
+    budgetData.sort((a, b) => new Date(a.date) - new Date(b.date));
     localStorage.setItem('budgetData', JSON.stringify(budgetData))
 }
 
-
-
+// Рендер таблицы с записями 
 function renderTable(data = budgetData) {
     budgetTable.innerHTML = '';
     data.forEach((item, index) => {
@@ -34,7 +46,7 @@ function renderTable(data = budgetData) {
         row.innerHTML = `
         <td>${item.category}</td> 
         <td>${item.description}</td>
-        <td class= "amount-cell">${item.amount} ₽</td>
+        <td class= "amount-cell">${item.amount.toLocaleString()} ₽</td>
         <td>${item.date}</td>
         <td>
            <button class="edit-btn">✏️</button>
@@ -52,36 +64,28 @@ function renderTable(data = budgetData) {
     });
 }
 
-function applyFilters() {
-    debugger;
-    const filterCategorySelectValue = filterCategorySelect.value;
-    const filterTypeSelectValue = filterTypeSelect.value;
-    const filterStartDateValue = filterStartDate.value;
-    const filterEndDateValue = filterEndDate.value;
+// Обновление общего состояния счёта
+function updateBalance(){
+    const balance = budgetData.reduce((total, item) => {
+        return item.type === 'Доход' 
+        ? total + item.amount 
+        : total - item.amount;
+    }, 0);
 
-    const filteredData = budgetData.filter(item => {
-        const matchesType = !filterTypeSelectValue || item.type === filterTypeSelectValue;
-        const matchesCategory = !filterCategorySelectValue || item.category === filterCategorySelectValue;
-        const matchesStartDate = !filterStartDateValue || new Date(item.date) >= new Date(filterStartDateValue);
-        const matchesEndDate = !filterEndDateValue || new Date(item.date) <= new Date(filterEndDateValue);
+    const balanceElement = document.getElementById('current-balance');
+    balanceElement.textContent = `Баланс: ${balance.toLocaleString()} ₽`;
 
-        return matchesType && matchesCategory && matchesStartDate && matchesEndDate
-    });
-
-    renderTable(filteredData);
+    balanceElement.classList.remove('income', 'expense');
+    if (balance < 0) {
+        balanceElement.classList.add('expense');
+    } else {
+        balanceElement.classList.add('income')
+    }
 }
- 
-document.getElementById('filter-form').addEventListener('submit', (e) => {
-    e.preventDefault(); // Отключаем перезагрузку страницы
-    applyFilters();
-});
 
-filterTypeSelect.addEventListener('change', (e) => {
-    updateFilterCategory(e.target.value);
-});
-
+// Обновление категории в основной форме зависимости от выбранного типа записи
 function updateCategoryOptions(type) {
-    categorySelect.innerHTML = ''; // Очистить текущие опции
+    categorySelect.innerHTML = ''; // очистка всех опций
     const categories = type === 'Расход' ? expenseCategories : incomeCategories;
 
     categories.forEach(category => {
@@ -91,6 +95,8 @@ function updateCategoryOptions(type) {
         categorySelect.appendChild(option);
     });
 }
+
+// Обновление категории для формы-фильтра 
 function updateFilterCategory (type = "") {
     filterCategorySelect.innerHTML = '<option value="">Все</option>'; 
     let categories;
@@ -109,9 +115,18 @@ function updateFilterCategory (type = "") {
     });
 }
 
+// Удаление записи
+function deleteRecord(index){
+    budgetData.splice(index, 1);
+    saveData();
+    renderTable();
+    updateBalance();
+    showNotification('Запись успешно удалена!');
+}
 
-
+// Изменение записи
 function editRecord(index) {
+    formTitle.textContent = "Изменить запись"
     const item = budgetData[index];
 
     document.getElementById('description').value = item.description;
@@ -123,8 +138,51 @@ function editRecord(index) {
 
     submitButton.textContent = 'Сохранить изменения';
     editIndex = index;
+
+    
+      // Подсветить форму и прокрутить к ней
+      formSection.classList.add('highlight');
+  
+      // Прокрутить страницу к форме
+      formSection.scrollIntoView({ behavior: 'smooth' });
+
+      
 }
 
+// Уведомления для пользователя
+function showNotification(message) {
+    const notification = document.getElementById('notification');
+    if (!notification) return;
+    notification.textContent = message;
+    notification.classList.remove('hidden');
+    notification.classList.add('show');
+    setTimeout(() => notification.classList.remove('show'), 2000);
+}
+
+// Применение фильтров
+function applyFilters() {
+    debugger;
+    const filterCategorySelectValue = filterCategorySelect.value;
+    const filterTypeSelectValue = filterTypeSelect.value;
+    const filterStartDateValue = filterStartDate.value;
+    const filterEndDateValue = filterEndDate.value;
+
+    const filteredData = budgetData.filter(item => {
+        const matchesType = !filterTypeSelectValue || item.type === filterTypeSelectValue;
+        const matchesCategory = !filterCategorySelectValue || item.category === filterCategorySelectValue;
+        const matchesStartDate = !filterStartDateValue || new Date(item.date) >= new Date(filterStartDateValue);
+        const matchesEndDate = !filterEndDateValue || new Date(item.date) <= new Date(filterEndDateValue);
+
+        return matchesType && matchesCategory && matchesStartDate && matchesEndDate
+    });
+
+    renderTable(filteredData);
+}
+
+
+// === События
+ 
+// Отправка основной формы формы (Добавление и редактирование записи)
 budgetForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const description = document.getElementById('description').value;
@@ -137,7 +195,10 @@ budgetForm.addEventListener('submit', (e) => {
     if(editIndex !== null) {
         budgetData[editIndex] = newRecord;
         editIndex = null;
+        showNotification('Запись успешно изменена!');
+        formSection.classList.remove("highlight")
         submitButton.textContent = 'Добавить';
+        formTitle.textContent = "Добавить запись";
     } else {
         budgetData.push(newRecord);
     }
@@ -148,35 +209,37 @@ budgetForm.addEventListener('submit', (e) => {
     updateCategoryOptions('Расход');
 });
 
-function updateBalance(){
-    const balance = budgetData.reduce((total, item) => {
-        return item.type === 'Доход' 
-        ? total + item.amount 
-        : total - item.amount;
-    }, 0);
-
-    const balanceElement = document.getElementById('current-balance');
-    balanceElement.textContent = `Баланс: ${balance.toFixed(2)} ₽`;
-
-    balanceElement.classList.remove('income', 'expense');
-    if (balance < 0) {
-        balanceElement.classList.add('expense');
-    } else {
-        balanceElement.classList.add('income')
-    }
-}
-
+// Обработка изменения типа записи для основной формы
 typeSelect.addEventListener('change', (e) => {
     updateCategoryOptions(e.target.value);
 });
 
-function deleteRecord(index){
-    budgetData.splice(index, 1);
-    saveData();
-    renderTable();
-}
+// Открытие\закрытие формы с фильтрами
+toggleFilterBtn.addEventListener("click", function(){
+    filterSection.classList.toggle("hidden");
+    if (filterSection.classList.contains("hidden")) {
+        toggleFilterBtn.textContent = "Показать фильтры";
+    } else {
+        toggleFilterBtn.textContent = "Скрыть фильтры";
+    }
+});
 
- updateFilterCategory();
+// Отправка формы-фильтра
+document.getElementById('filter-form').addEventListener('submit', (e) => {
+    e.preventDefault(); // отключение перезагрузки страницы
+    applyFilters();
+});
+
+// Обработка изменения типа записи для формы-фильтра 
+filterTypeSelect.addEventListener('change', (e) => {
+    updateFilterCategory(e.target.value);
+});
+
+
+
+ updateBalance();
  renderTable();
  updateCategoryOptions(typeSelect.value);
+ updateFilterCategory();
+
 })

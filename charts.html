@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Учёт бюджета</h1>
+        <nav>
+            <ul>
+                <a href="index.html">Главная</a>
+                <a href="charts.html" class="active">Графики</a>
+            </ul>
+        </nav>
+    </header>
+    <section id="charts-section">
+        <h2>Расходы и доходы категориям</h2>
+        <div class="chart-container">
+        <div id="pie-expense-chart" style="width: 100%; height: 400px;"></div>
+        <div id="pie-income-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+        <h2>Доходы и расходы по месяцам</h2>
+        <div id="bar-chart" style="width: 100%; height: 400px;"></div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <script src="/js/charts.js"></script>
+</body>
+</html>
