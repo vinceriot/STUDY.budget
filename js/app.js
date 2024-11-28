@@ -75,12 +75,8 @@ function updateBalance(){
     const balanceElement = document.getElementById('current-balance');
     balanceElement.textContent = `Баланс: ${balance.toLocaleString()} ₽`;
 
-    balanceElement.classList.remove('income', 'expense');
-    if (balance < 0) {
-        balanceElement.classList.add('expense');
-    } else {
-        balanceElement.classList.add('income')
-    }
+    balanceElement.classList.toggle('expense', balance < 0);
+    balanceElement.classList.toggle('income', balance >= 0);
 }
 
 // Обновление категории в основной форме зависимости от выбранного типа записи
