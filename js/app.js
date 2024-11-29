@@ -2,6 +2,10 @@
 
 window.addEventListener("DOMContentLoaded", function() {
 
+
+// === Константы
+const INCOME_TYPE = 'Доход';
+const EXPENSE_TYPE = 'Расход';
 const budgetData = JSON.parse(localStorage.getItem('budgetData')) || [];
 
 // === DOM элементы
@@ -38,21 +42,22 @@ function saveData() {
 // Рендер таблицы с записями 
 function renderTable(data = budgetData) {
     budgetTable.innerHTML = '';
+    const dateFormatter = new Intl.DateTimeFormat('ru');
     data.forEach((item, index) => {
         const row =document.createElement('tr');
 
-        row.classList.add(item.type === 'Расход' ? 'expense' : 'income');
+        row.classList.add(item.type === EXPENSE_TYPE ? 'expense' : 'income');
 
         row.innerHTML = `
         <td>${item.category}</td> 
         <td>${item.description}</td>
         <td class= "amount-cell">${item.amount.toLocaleString()} ₽</td>
-        <td>${item.date}</td>
+        <td>${dateFormatter.format(new Date(item.date))}</td> 
         <td>
            <button class="edit-btn">✏️</button>
             <button class="delete-btn">🗑️</button>
         </td>
-        `;
+        `; 
         budgetTable.appendChild(row);
 
         const editBtn = row.querySelector('.edit-btn');
@@ -67,7 +72,7 @@ function renderTable(data = budgetData) {
 // Обновление общего состояния счёта
 function updateBalance(){
     const balance = budgetData.reduce((total, item) => {
-        return item.type === 'Доход' 
+        return item.type === INCOME_TYPE
         ? total + item.amount 
         : total - item.amount;
     }, 0);
@@ -82,7 +87,7 @@ function updateBalance(){
 // Обновление категории в основной форме зависимости от выбранного типа записи
 function updateCategoryOptions(type) {
     categorySelect.innerHTML = ''; // очистка всех опций
-    const categories = type === 'Расход' ? expenseCategories : incomeCategories;
+    const categories = type === EXPENSE_TYPE ? expenseCategories : incomeCategories;
 
     categories.forEach(category => {
         const option = document.createElement('option');
@@ -98,7 +103,7 @@ function updateFilterCategory (type = "") {
     let categories;
 
     if (type) {
-        categories = type === 'Расход' ? expenseCategories : incomeCategories;
+        categories = type === EXPENSE_TYPE ? expenseCategories : incomeCategories;
     } else {
         categories =[...incomeCategories, ...expenseCategories];
     }
@@ -157,7 +162,6 @@ function showNotification(message) {
 
 // Применение фильтров
 function applyFilters() {
-    debugger;
     const filterCategorySelectValue = filterCategorySelect.value;
     const filterTypeSelectValue = filterTypeSelect.value;
     const filterStartDateValue = filterStartDate.value;
@@ -182,12 +186,15 @@ function applyFilters() {
 budgetForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const description = document.getElementById('description').value;
-    const amount = parseFloat(document.getElementById('amount').value);
+    let amount = (document.getElementById('amount').value);
     const type = document.getElementById('type').value;
     const category = document.getElementById('category').value;
-    const date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
+    const date = document.getElementById('date').value || new Date().toISOString().slice(0, 10);
+    
+    amount = parseFloat(amount.replace(/[^\d.]/g, ''));
     
     const newRecord = { description, amount, type, category, date };
+    
     if(editIndex !== null) {
         budgetData[editIndex] = newRecord;
         editIndex = null;
@@ -198,11 +205,12 @@ budgetForm.addEventListener('submit', (e) => {
     } else {
         budgetData.push(newRecord);
     }
+
     saveData();
     renderTable();
     updateBalance();
     budgetForm.reset();
-    updateCategoryOptions('Расход');
+    updateCategoryOptions(EXPENSE_TYPE);
 });
 
 // Обработка изменения типа записи для основной формы

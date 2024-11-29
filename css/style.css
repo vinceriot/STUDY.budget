@@ -40,7 +40,7 @@ nav a:hover {
 }
 
 
-nav a.active {
+nav a.active {  
     border-bottom: 2px solid #ffffff; 
 }
 
